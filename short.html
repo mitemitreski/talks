@@ -4,9 +4,9 @@
   <head>
     <meta charset="utf-8">
 
-    <title>QueryDSL</title>
+    <title>Premature optimization</title>
 
-    <meta name="description" content="A framework for makeing easy SQl queries">
+    <meta name="description" content="Lighting talk about optimization">
     <meta name="author" content="Mite Mitreski">
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -38,27 +38,35 @@
       <div class="slides">
 
         <section>
-        <h1>QueryDSL</h1>
-        <h3>Clean way to have SQL in your java applications</h3>
+        <h1>Premature Optimization</h1>
+        <h3>Is it normal?</h3>
         <p>
         <small>by <a href="http://mitemitreski.com">Mite Mitreski</a> / <a href="http://twitter.com/mitemitreski">@mitemitreski</a></small>
         </p>
         </section>
 
-        <section>
-        <h2>Agenda</h2>
-        <ul>
-          <li>SQL in Java</li>
-          <li>Problems</li>
-          <li>Solution</li>
-          <li>Problems with the solution</li>
-        </ul>
-        <aside class="notes">
-          Describe why and why not
-        </aside>
+    <section>
+        <blockquote>
+        Premature optimization is the root of all evil (or at least most of it) in programming.
+      </blockquote>
+      <p>
+       -Donald Knuth
+      </p>
         </section>
 
+
         <section>
+        <blockquote>
+        The road to programming hell is paved with “best practices” applied too early. Very few abstractions,
+        extractions, or architectures are inherently bad (although I’ll contend that a few are). But most of them are
+        downright evil if applied before they’re called for.
+      </blockquote>
+      <p>
+       -David Heinemeier Hansson, Winning is the worst thing that can happen in Vegas
+      </p>
+        </section>
+
+         <section>
           <section>
           <h2>S*** HN says</h2>
           <p>
@@ -70,460 +78,108 @@
           </center>
           </p>
           </section>
+
           <section>
-          <h2>Basement Level 1</h2>
+          <h2>Add Back up image</h2>
           <p>Press down or up to navigate.</p>
           </section>
         </section>
 
         <section>
-        <h2>Standard JDBC</h2>
-        <p>
-        <pre>
-          <code contenteditable>
-Class.forName("oracle.jdbc.driver.OracleDriver");
-// or you can use:
-Connection conn = DriverManager.getConnection(
-  "jdbc:oracle:oci8:@myawesomeserver", "mite", "mitreski");
+          <h2>Real problem</h2>
+          <img src="img/fast.jpg" />
+          </section>
 
-Statement stmt = conn.createStatement();
-ResultSet rset = stmt
-    .executeQuery("select * from Person");
 
-while (rset.next()){
-    System.out.println(rset.getString(1));
-}
-rset.close();
-stmt.close();
-conn.close();
-          </code>
-        </pre>
-        </p>
+        <section>
+          <h2>Don't just conatenate strings use </h2>
+          <code>StringBuffer/StringBuilder</code>
         </section>
 
        <section>
-          <h2>JDBC Templates</h2>
-         <p>
-<pre>
-<code contenteditable>
-public Person findByPersonId(int personId){
-
-String sql = "SELECT * FROM PERSON WHERE PERSON_ID = ?";
-
-Person person = (Person)getJdbcTemplate().queryForObject(
-      sql, new Object[] { personId }, new PersonRowMapper());
-
-return person;
-}
-</code>
-</pre>
-</p>
+          <h2>Only partialy true</h2>
+          <p>If you do this in a long loop or a function that calls a lot of different fuctions only than it makes sense</p>
        </section>
+
         <section>
-       <h2>JDBC Templates</h2>
-        <p>
-        <pre>
-        <code contenteditable>
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.springframework.jdbc.core.RowMapper;
-
-public class PersonRowMapper implements RowMapper {
-  public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-    Person person = new Person();
-    person.setPersonId(rs.getInt("PERSON_ID"));
-    person.setName(rs.getString("NAME"));
-    person.setAge(rs.getInt("AGE"));
-    return person;
-  }
-}
-        </code>
-        </pre>
-        </p>
-       </section>
-<section>
-  <h2>Object Relational Mapping</h2>
-</section>
-<section>
-  <h2>The problems are the same</h2>
-  <ul>
-    <li>You need to know the query syntax
-    <li>You need to know the domain classes, properties and relations
-    <li>Very easy to make a mistake
-  </ul>
-</section>
-  <section>
-    <h2>What about Criteria API?</h2>
-<pre>
-<code contenteditable>
-CriteriaQuery query = builder.createQuery();
-Root<Person> men = query.from( Person.class );
-Root<Person> women = query.from( Person.class );
-Predicate menRestriction = builder.and(
-    builder.equal( men.get( Person_.gender ), Gender.MALE ),
-    builder.equal( men.get( Person_.relationshipStatus ),
-RelationshipStatus.SINGLE ));
-Predicate womenRestriction = builder.and(
-    builder.equal( women.get( Person_.gender ), Gender.FEMALE ),
-    builder.equal( women.get( Person_.relationshipStatus ),
-RelationshipStatus.SINGLE ));
-query.where( builder.and( menRestriction, womenRestriction ) );
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Why don't we use string concatenation?</h2>
-<pre>
-<code contenteditable>
- String sql = "SELECT * PERSON WHERE PERSON_ID="+
-id+" AND ...";
-</code>
-</pre>
-</section>
-
-<section>
-  <h2>Exploits of a mom</h2>
- <img src="img/exploits_of_a_mom.png" />
-</section>
-
-<section>
-  <h2>How is QueryDSL better?</h2>
-  <ul>
-    <li>Domain model specific type-safe query language</li>
-    <li>Compile time query validation, since it's type safe</li>
-    <li>Instant feedback on query errors</li>
-    <li>Syntax looks like SQL</li>
-    <li>Great for dynamic query building</li>
-  </ul>
-</section>
-
-<section>
-  <h2>And more?</h2>
-  <ul>
-    <li>Supports JPA, JDO, Hibernate, Lucene</li>
-    <li>Also SQL, Java Collections, Hibernate search, MongoDB</li>
-    <li>License is Apache 2</li>
-  </ul>
-</section>
-
-<section>
-  <h2>QueryDSL where have you been?</h2>
-  <ul>
-    <li>Development started in 2007 with public releases since 2008</li>
-    <li>Talks about makeing into a standard API</li>
-  </ul>
-</section>
-
-<section>
-<h2>Basics</h2>
-<p>
-  <ul>
-    <li>Variables </li>
-<pre>
-<code contenteditable>
-// default variable for person
-QPerson.person
-// custom variable for Person ex for use in SubQuery or selfjoin
-new QPerson("myPerson2")
-</code>
-</pre>
-<li> The Query classes</li>
-<pre>
-<code contenteditable>
-JPAQuery, HibernateQuery, SQLQueryImpl ...
-</code>
-</pre>
-</ul>
-</p>
-</section>
-
-<section>
-<h2>The signature</h2>
-<p>
-<pre>
-<code>from
-
-    Query sources
-
-innerJoin, join, leftJoin, fullJoin, on Join elements
-
-join(source, alias) [.on(source.prop.eq(alias.prop))]
-
-where
-    Query filters, varargs for intersection (and) and(), or(), allOf(), anyOf()
-</code>
-</pre>
-</p>
-</section>
-
-<section>
-<h2>And the other SQL elements</h2>
-<pre>
-<code contenteditable>
-groupBy
-    Group by arguments in varargs form
-having
-    Having filter of the "group by” as an varags array of Predicate expressions.
-orderBy
-      Ordering of the result as an varargs array of order expressions. asc() and desc() on numeric, string and other comparable expression
-limit, offset, restrict
-      Paging of the result
-      Limit for max results and Offset for skipping rows and
-      Restrict for defining both in one call
-
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Code Example</h2>
-<pre>
-<code contenteditable>
-QPerson person = QPerson.person;
-JPAQuery query = new JPAQuery(entityManager);
-
-List<Person> persons = query.from(person)
-  .where(
-     person.firstName.eq("John"),
-     person.lastName.eq("Doe"))
-  .list(person);
-
-</code>
-</pre>
-</section>
-
-<section>
-<h2>The generated SQL</h2>
-<p>
-<pre>
-<code contenteditable>
-select person from com.acme.Person person
-where person.firstName eq = ?1 and person.lastName = ?2
-</code>
-</pre>
-</p>
-</section>
-
-<section>
-<h2>Find all persons and ordered by last name and age</h2>
-<pre>
-<code contenteditable>
-query.from(person)
-  .orderBy(
-    person.lastName.asc(),
-    person.age.asc())
-  .list(person)
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Find all persons and ordered by last name and grouped by age</h2>
-<pre>
-<code contenteditable>
-query.from(person)
-  .groupBy(person.age)
-  .orderBy(person.lastName.asc())
-  .list(person.lastName, person.age, person.count())
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Tuples</h2>
-<pre>
-<code contenteditable>
-
-List<Tuple> tuples = query
-.from(person)
-.list(new QTuple(
-  person.lastName,
-  person.age));
-
-
-for (Tuple tuple : tuples){
-  // Typed access to mapped query results!
-  String namesAndAge = tuple.get(person.firstName) +
-  " is " + tuple.get(person.age) + " old";
-  System.out.println(namesAndAge);
-}
-
-</code>
-</pre>
-</section>
-
-<section>
-  <h2>But sometimes I need select inside a select inside a select inside...</h2>
-</section>
-
-<section>
-<h2>Subqueries</h2>
-<pre>
-<code contenteditable>
-//Get persons with max child count
-QPerson parent = new QPerson("parent");
-query
-.from(person)
-.where(person.children.size().eq(
-    new JPASubQuery().from(parent)
-                     .uniqueResult(parent.children.size().max())
-)).list(person);
-</code>
-</pre>
-</section>
-
-
-<section>
-  <h2>What about those DTO's, I still need to map them manualy or?</h2>
-</section>
-
-<section>
-<h2>Constructor projection</h2>
-<pre>
-<code contenteditable>// DTO class with @QueryProjection constructor annotation
-public class PersonView {
-  String name;
-  Boolean awesome
-
-  @QueryProjection
-  public PersonInfo(Boolean awesome, String name) {
-    this.awesome = awesome;
-    this.name = name;
-  }
-}
-
-List<PersonView> infos =
-query
-.from(person)
-.list(
-  new QPersonView(person.age.gt(18),person.name)
-);
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Update</h2>
-<pre>
-<code contenteditable>
-long updatedRowCount =
-  new JPAUpdateClause(getEntityManager(), person)
-    .set(person.firstName, "Shake")
-    .where(person.lastName.eq("Harlem"))
-    .execute();
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Delete</h2>
-<pre>
-<code contenteditable>
-long updatedRowCount =
-  new JPADeleteClause(getEntityManager(), person)
-    .where(
-      person.age.gt(101))
-    .execute();
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Dynamic queries with BooleanBulder</h2>
-<pre>
-<code contenteditable>
-
-BooleanBuilder crazyConditions = new BooleanBuilder();
-for (String name : allowedNames) {
-  crazyConditions.or(person.firstName.like(name));
-}
-crazyConditions.or(person.age.gt(2));
-
-query.where(crazyConditions);
-</code>
-</pre>
-</section>
-
-
-<section>
-  <h2>What is the magic in creating all this Q* classes</h2>
-</section>
-
-
-<section>
-  <h2>It's all about the meta data</h2>
-  <img src="img/data.png" />
-</section>
-
-<section>
-<h2>Maven + JPA</h2>
-<pre>
-<code contenteditable>
-&lt;build&gt;&lt;plugins&gt;&lt;plugin&gt;
-&lt;groupId&gt;com.mysema.maven&lt;/groupId&gt;
-&lt;artifactId&gt;maven-apt-plugin&lt;/artifactId&gt;
-&lt;version&gt;1.0.3&lt;/version&gt;
-&lt;executions&gt;
-&lt;execution&gt;
-&lt;goals&gt;&lt;goal&gt;process&lt;/goal&gt;&lt;/goals&gt;
-&lt;configuration&gt;
-&lt;outputDirectory&gt;target/generated-sources/java&lt;/outputDirectory&gt;
-&lt;processor&gt;com.mysema.query.apt.jpa.JPAAnnotationProcessor&lt;/processor&gt;
-&lt;/configuration&gt;
-&lt;/execution&gt;
-&lt;/executions&gt;
-&lt;/plugin&gt;&lt;/plugins&gt;&lt;/build&gt;
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Maven + SQL</h2>
-<pre>
-<code contenteditable>&lt;build&gt;&lt;plugins&gt;&lt;plugin&gt;
-&lt;groupId&gt;com.mysema.querydsl&lt;/groupId&gt;
-&lt;artifactId&gt;querydsl-maven-plugin&lt;/artifactId&gt;
-&lt;version&gt;${querydsl.version}&lt;/version&gt;
-&lt;executions&gt;&lt;execution&gt;
-&lt;goals&gt;&lt;goal&gt;export&lt;/goal&gt;&lt;/goals&gt;
-&lt;/execution&gt;&lt;/executions&gt;
-&lt;configuration&gt;
-&lt;jdbcDriver&gt;org.somdDB.jdbc.EmbeddedDriver&lt;/jdbcDriver&gt;
-&lt;jdbcUrl&gt;jdbc:derby:target/demoDB;create=true&lt;/jdbcUrl&gt;
-&lt;packageName&gt;com.myproject.domain&lt;/packageName&gt;
-&lt;targetFolder&gt;${project.basedir}/target/generated-sources/java&lt;/targetFolder&gt;
-&lt;/configuration&gt;
-...
-</code>
-</pre>
-</section>
-
-<section>
-<h2>Usage in Java collections</h2>
-<pre>
-<code contenteditable>
-QCat cat = new QCat("cat");
-for (String name : from(cat,cats)
-  .where(cat.kittens.size().gt(0))
-  .list(cat.name)){
-    System.out.println(name);
-}
-</code>
-</pre>
-</section>
-
-<section>
-        <h2>Summary</h2>
-        <p>QueryDSL is awesome but...</p>
-        <p class="fragment">... if you depend highly on a DBA then its not usefull, otherwise ...</p>
-          <p class="fragment">It should be part in almost any project</p>
-
-</section>
-        <section>
-          <h1>That is all folks</h1>
+          <h2>Object reference creation is expensive</h2>
+          <pre>
+          <code contenteditable>
+            SomeObject x = null;
+            for(int i = 0; i&lt1000;i++){
+              x = someMethod();
+              ...
+            }
+          </code>
+          </pre>
         </section>
+
+        <section>
+          <h2>Initalize collection if you know the number of objects</h2>
+          <pre>
+          <code contenteditable>
+            List<SomeObject> xList = new ArrayList(1000);
+            for(int i = 0; i&lt1000;i++){
+              xList.add(...);
+              ...
+            }
+          </code>
+          </pre>
+        </section>
+
+        <section>
+          <h2>Just add final and the code will run faster</h2>
+          <pre>
+          <code contenteditable>
+            List<SomeObject> xList = ...;
+            for(int i = 0; i&lt1000;i++){
+              final SomeObject o = xList.get(i);
+              ...
+            }
+          </code>
+          </pre>
+        </section>
+
+
+        <section>
+        <blockquote>
+
+        A common misconception is that optimized code is necessarily more complicated, and that therefore optimization
+        always represents a trade-off. However, in practice, better factored code often runs faster and uses less memory
+        as well. In this regard, optimization is closely related to refactoring, since in both cases we are paying into
+        the code so that we may draw back out again later if we need to. We don't (yet) have PrematureRefactoring?
+        regarded as CategoryEvil.
+
+
+      </blockquote>
+       <p>C2, Premature Optimization </p>
+        </section>
+
+        <section>
+          The favourite
+          <ul>
+            <li>Make it work.
+            <li>Make it right (the code is readable )
+            <li>Make everything work.
+            <li>Make everything right.
+            <li>Use the system and find performance bottlenecks.
+            <li>Use a profiler in those bottlenecks to determine what needs to be optimized.
+            <li> Make it fast. You maintained unit tests, right? Then you can refactor the code mercilessly in order to improve the performance.
+        <p>-- Guillermo Schwarz</p>
+        </section>
+
+
+       <section>
+          <h1>Optimization is normal as long as it does not hurt readability</h1>
+        </section>
+
+       <section>
+       <h1>That is all folks</h1>
+       <p>note that faster is not always better</p>
+        </section>
+
+
+
 
       </div>
 
