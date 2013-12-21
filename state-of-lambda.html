@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>State of Lambda</title>
+
+    <meta name="description" content="State of Lambda">
+    <meta name="author" content="Mite Mitreski">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/serif.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/idea.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+      document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+    <div class="slides">
+
+        <section>
+        <h1>State of the &lambda;</h1>
+        <p>
+          <small>by <a href="http://mitemitreski.com">Mite Mitreski</a> / <a href="http://twitter.com/mitemitreski">@mitemitreski</a></small>
+        </p>
+        </section>
+
+       <section>
+          <h2>Why a lambda(&lambda;) talk? </h2>
+          <img src="img/brianphoto.jpg" alt="bg" />
+          <p>September 2013 the final state</p>
+      </section>
+
+        <section>
+          <h2>What will we cover</h2>
+          <ul>
+            <li>Lambda expressions ("closures" or "anonymous methods")
+            <li>Method and constructor references
+            <li>Expanded target typing and type inference
+            <li>Default and static methods in interfaces
+          </ul>
+        </section>
+
+
+        <section>
+          <h2>Source level &lt; Java 8</h2>
+          <pre>
+          <code contenteditable>
+List personList = Arrays.asList(
+  new Person("Mite Mitreski", 12),
+  new Person("John Doe", 13));
+
+Collections.sort(personList, new Comparator&lt;Person&gt;() {
+  @Override
+  public int compare(Person a, Person b) {
+      return a.getAge().compareTo(b.getAge());
+  }
+});
+          </code>
+          </pre>
+        </section>
+
+        <section>
+          <h2>Why not anonymus class?</h2>
+          <ul>
+            <li>Bulky syntax
+            <li>Confusion surrounding the meaning of names and <b>this</b>
+            <pre>
+               <code>
+    OuterClassName.this.outerClassMethod();
+               </code>
+              </pre>
+              </li>
+            <li>Inflexible class-loading and instance-creation semantics
+            <li>Inability to capture non-final local variables
+          </ul>
+        </section>
+
+         <section>
+          <h2>Java 8</h2>
+          <pre>
+          <code contenteditable>
+List personList = Arrays.asList(
+  new Person("Mite Mitreski", 12),
+  new Person("John Doe", 13));
+
+Collections.sort(personList, 
+      (Person a, Person b) -> a.getAge().compareTo(b.getAge()));
+
+          </code>
+          </pre>
+      </section>
+      
+   <section>
+          <h2>Java 8</h2>
+          <pre>
+          <code contenteditable>
+Collections.sort(personList, (a, b) -> a.getAge().compareTo(b.getAge()));
+          </code>
+          </pre>
+          <pre>
+          <code style="color:red;" contenteditable>
+(a, b) -> a.getAge().compareTo(b.getAge());
+          </code>
+          </pre>
+          <pre>
+          <code contenteditable>
+Comparator personByAge = (a, b) -> a.getAge().compareTo(b.getAge());
+
+Collections.sort(personList, Comparator.comparingInt(Person::getAge));
+
+          </code>
+          </pre>
+      </section>
+      
+
+      <section>
+        <h2>JEP 107 : Bulk Data Operations for Collections</h2>
+        <blockquote>
+          Filter/Map/Reduce for Java.
+        </blockquote>
+      </section>
+
+      <section>
+        <h2>Classic filtering</h2>
+        <pre>
+        <code contenteditable>
+
+List<Person> filtered = new ArrayList<>();
+for (Person p : personList) {
+    if (p.getName().contains("Jo")) {
+        filtered.add(p);
+    }
+}
+
+Iterator<Person> personIterator = personList.listIterator();
+while (personIterator.hasNext()) {
+    Person p = personIterator.next();
+    if (!p.getName().contains("Jo")) {
+        personIterator.remove();
+    }
+}
+       </code>
+     </pre>
+    </section>
+ 
+   
+ 
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+      // Full list of configuration options available here:
+      // https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+        { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+        { src: 'plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+        { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+        { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+        // { src: 'plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+        ]
+        });
+
+      </script>
+
+    </body>
+  </html>
