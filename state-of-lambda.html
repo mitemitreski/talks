@@ -111,7 +111,7 @@ Collections.sort(personList,
       </section>
       
    <section>
-          <h2>Java 8</h2>
+          <h2>Target typing</h2>
           <pre>
           <code contenteditable>
 Collections.sort(personList, (a, b) -> a.getAge().compareTo(b.getAge()));
@@ -125,13 +125,130 @@ Collections.sort(personList, (a, b) -> a.getAge().compareTo(b.getAge()));
           <pre>
           <code contenteditable>
 Comparator personByAge = (a, b) -> a.getAge().compareTo(b.getAge());
-
-Collections.sort(personList, Comparator.comparingInt(Person::getAge));
-
           </code>
           </pre>
       </section>
-      
+
+         <section>
+          <h2>Context for target typing</h2>
+          <pre>
+          <code style="color:red;" contenteditable>
+Object o = () -> { System.out.println("hi"); };
+          </code>
+          </pre>
+           
+          <pre>
+          <code contenteditable>
+Object o = (Runnable) () -> { System.out.println("hi"); };
+          </code>
+          </pre>
+           
+      </section>
+
+
+     <section>
+        <h2>Functional interfaces</h2>
+         <ul>
+          <li>Has one method, ex <i>java.lang.Runnable or java.util.concurrent.Callable</i>
+          <li>We can explicity mark it as @FunctionalInterface
+          <li>Structural function type intentionaly not added
+         </ul>
+    </section>
+
+
+    <section>
+        <h2>java.util.function</h2>
+         <ul>
+          <li><b>Predicate&lt;T&gt;</b>    boolean-valued property of an object
+          <li><b>Consumer&lt;T&gt;</b>   an action to be performed on an object
+          <li><b>Function&lt;T,R&gt;</b>  a function transforming a T to a R
+          <li><b>Supplier&lt;T&gt;</b>   provide an instance of a T (such as a factory)
+          <li><b>UnaryOperator&lt;T&gt;</b>   a function from T to T
+          <li><b>BinaryOperator&lt;T&gt;</b>   a function from (T, T) to T
+         </ul>
+    </section>
+
+    <section>
+        <h2>Is Guava obsolete now ?</h2>
+    </section>
+          
+<section>
+        <h2> The hidden gem of target typing </h2>
+        <pre>
+        <code contenteditable>
+class List&lt;E&gt; {
+    static &lt;Z&gt; List&lt;Z&gt; nil() {..}
+    static &lt;Z&gt; List&lt;Z&gt; cons(Z head, List&lt;Z&gt; tail) {..}
+    E head() {..}
+}
+
+// This:
+List.cons(42, List.nil());
+String s = List.nil().head();
+ 
+// ... instead of this:
+List.cons(42, List.&lt;Integer&gt;nil());
+String s = List.&lt;String&gt;nil().head();
+
+       </code>
+     </pre>
+     <p>details <a href="http://java.dzone.com/articles/lesser-known-java-8-feature">@lucaseder</a></p>
+    </section>
+
+
+      <section>
+        <h2>Method references</h2>
+          <pre>
+      <code contenteditable>
+// public static void exit(int status)
+Consumer&lt;Integer&gt; exit = System::exit;
+exit.accept(2);
+
+//public static void sort(Object[] a)
+Consumer&lt;String[]&gt; sorter = Arrays::sort;
+sorter.accept(new String[]{"awesome"});
+//same as 
+Consumer sorter = Arrays::sort;
+
+Collections.sort(personList, Comparator.comparingInt(Person::getAge));
+
+
+          </code>
+          </pre>
+
+      </section>
+
+
+      <section>
+        <h2>Kind of method references</h2>
+      <ul>
+        <li>A static method <pre><code>(ClassName::methName)</code></pre>
+        <li>An instance method of a particular object <pre><code>(instanceRef::methName)</code></pre>
+        <li>A super method of a particular object<pre><code>(super::methName)</code></pre>
+        <li>An instance method of an arbitrary object of a particular type<pre><code>(ClassName::methName)</code></pre>
+        <li>A class constructor reference <pre><code>(ClassName::new)</code></pre>
+
+        <li>An array constructor reference <pre><code> (TypeName[]::new) </code></pre>
+      </ul>
+
+      </section>
+ 
+      <section>
+        <h2>Lexical scoping</h2>
+        <pre>
+        <code contenteditable>
+
+Callable&lt;String&gt; myCall(String name) {
+  String hello = "Hello";
+  return () -&gt; (hello + "," + name);
+}
+
+       </code>
+     </pre>
+    </section>
+
+
+
 
       <section>
         <h2>JEP 107 : Bulk Data Operations for Collections</h2>
@@ -162,9 +279,81 @@ while (personIterator.hasNext()) {
        </code>
      </pre>
     </section>
+
+      <section>
+        <h2>Java 8 filter</h2>
+        <pre>
+        <code contenteditable>
+         List<Person> filtered = personList.
+                stream().
+                filter(el -> el.getName().contains("yo")).collect(
+                    Collectors.toCollection(() -> new ArrayList<>())
+                );
+       </code>
+     </pre>
+    </section>
  
-   
- 
+
+
+      <section>
+        <h2>Map/Reduce</h2>
+        <pre>
+        <code contenteditable>
+         int totalAge = personList.stream()
+                .mapToInt(e -> e.getAge())
+                .reduce(0, (x,y) -> x+y);
+       </code>
+     </pre>
+    </section>
+
+    <section>
+    <h2>Default implemnation on interface and static methods </h2>
+        <pre>
+        <code contenteditable>
+    interface Artist {
+        default void draw() { System.out.println(); }
+        static void test(){};
+    }
+    </code>
+     </pre>
+     </section>
+
+    <section>
+    <h2>Diamond problem</h2>
+        <pre>
+        <code contenteditable>
+    interface Artist {
+        default void draw() { System.out.println(); }
+        static void test(){};
+    }
+
+    interface Gun {
+        default void draw() { System.out.println(); }
+    }
+
+    class Robot implements Artist, Gun {
+      public void draw() { Artist.super.draw(); }
+    }       
+    </code>
+     </pre>
+     </section>
+
+
+
+      <section>
+        <h2>One liner, is it awesome or ? </h2>
+    </section>
+
+
+    <section>
+        <h2>It is the biggest change in the language since it's first release </h2>
+    </section>
+
+    <section>
+        <h2>Thank you for your time </h2>
+    </section>
+
+      
       </div>
 
     </div>
